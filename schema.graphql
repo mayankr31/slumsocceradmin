@@ -1,0 +1,413 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type Mutation {
+  createSlumsoccerBlogs(input: CreateSlumsoccerBlogsInput!): SlumsoccerBlogs
+  createSlumsoccerEvents(input: CreateSlumsoccerEventsInput!): SlumsoccerEvents
+  createSlumsoccerGallery(input: CreateSlumsoccerGalleryInput!): SlumsoccerGallery
+  createSlumsoccerNews(input: CreateSlumsoccerNewsInput!): SlumsoccerNews
+  createSlumsoccerPartners(input: CreateSlumsoccerPartnersInput!): SlumsoccerPartners
+  createSlumsoccerProjects(input: CreateSlumsoccerProjectsInput!): SlumsoccerProjects
+  deleteSlumsoccerBlogs(input: DeleteSlumsoccerBlogsInput!): SlumsoccerBlogs
+  deleteSlumsoccerEvents(input: DeleteSlumsoccerEventsInput!): SlumsoccerEvents
+  deleteSlumsoccerGallery(input: DeleteSlumsoccerGalleryInput!): SlumsoccerGallery
+  deleteSlumsoccerNews(input: DeleteSlumsoccerNewsInput!): SlumsoccerNews
+  deleteSlumsoccerPartners(input: DeleteSlumsoccerPartnersInput!): SlumsoccerPartners
+  deleteSlumsoccerProjects(input: DeleteSlumsoccerProjectsInput!): SlumsoccerProjects
+  updateSlumsoccerBlogs(input: UpdateSlumsoccerBlogsInput!): SlumsoccerBlogs
+  updateSlumsoccerEvents(input: UpdateSlumsoccerEventsInput!): SlumsoccerEvents
+  updateSlumsoccerGallery(input: UpdateSlumsoccerGalleryInput!): SlumsoccerGallery
+  updateSlumsoccerNews(input: UpdateSlumsoccerNewsInput!): SlumsoccerNews
+  updateSlumsoccerPartners(input: UpdateSlumsoccerPartnersInput!): SlumsoccerPartners
+  updateSlumsoccerProjects(input: UpdateSlumsoccerProjectsInput!): SlumsoccerProjects
+}
+
+type Query {
+  getSlumsoccerBlogs(blogId: String!): SlumsoccerBlogs
+  getSlumsoccerEvents(eventId: String!): SlumsoccerEvents
+  getSlumsoccerGallery(galleryId: String!): SlumsoccerGallery
+  getSlumsoccerNews(newsId: String!): SlumsoccerNews
+  getSlumsoccerPartners(partnerId: String!): SlumsoccerPartners
+  getSlumsoccerProjects(projectid: String!): SlumsoccerProjects
+  listSlumsoccerBlogs(filter: TableSlumsoccerBlogsFilterInput, limit: Int, nextToken: String): SlumsoccerBlogsConnection
+  listSlumsoccerEvents(filter: TableSlumsoccerEventsFilterInput, limit: Int, nextToken: String): SlumsoccerEventsConnection
+  listSlumsoccerGalleries(filter: TableSlumsoccerGalleryFilterInput, limit: Int, nextToken: String): SlumsoccerGalleryConnection
+  listSlumsoccerNews(filter: TableSlumsoccerNewsFilterInput, limit: Int, nextToken: String): SlumsoccerNewsConnection
+  listSlumsoccerPartners(filter: TableSlumsoccerPartnersFilterInput, limit: Int, nextToken: String): SlumsoccerPartnersConnection
+  listSlumsoccerProjects(filter: TableSlumsoccerProjectsFilterInput, limit: Int, nextToken: String): SlumsoccerProjectsConnection
+}
+
+type SlumsoccerBlogs {
+  blogId: String!
+  date: String
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  imgUrl: String
+  mainContent: AWSJSON
+  title: String
+}
+
+type SlumsoccerBlogsConnection {
+  items: [SlumsoccerBlogs]
+  nextToken: String
+}
+
+type SlumsoccerEvents {
+  date: String
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  eventId: String!
+  imgUrl: String
+  mainContent: AWSJSON
+  title: String
+}
+
+type SlumsoccerEventsConnection {
+  items: [SlumsoccerEvents]
+  nextToken: String
+}
+
+type SlumsoccerGallery {
+  ef1: AWSJSON
+  galleryId: String!
+  imgUrl: String
+  title: String
+}
+
+type SlumsoccerGalleryConnection {
+  items: [SlumsoccerGallery]
+  nextToken: String
+}
+
+type SlumsoccerNews {
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  imgUrl: String
+  link: String
+  newsId: String!
+  newspaper: String
+  title: String
+}
+
+type SlumsoccerNewsConnection {
+  items: [SlumsoccerNews]
+  nextToken: String
+}
+
+type SlumsoccerPartners {
+  description: String
+  ef1: AWSJSON
+  imgUrl: String
+  link: String
+  partnerId: String!
+  partnershipType: String
+  title: String
+}
+
+type SlumsoccerPartnersConnection {
+  items: [SlumsoccerPartners]
+  nextToken: String
+}
+
+type SlumsoccerProjects {
+  description: String
+  hoverText: String
+  imgUrl: String
+  mainContent: AWSJSON
+  projectType: String
+  projectid: String!
+  title: String
+}
+
+type SlumsoccerProjectsConnection {
+  items: [SlumsoccerProjects]
+  nextToken: String
+}
+
+type Subscription {
+  onCreateSlumsoccerBlogs(blogId: String, description: String, imgUrl: String, mainContent: AWSJSON, title: String): SlumsoccerBlogs @aws_subscribe(mutations : ["createSlumsoccerBlogs"])
+  onCreateSlumsoccerEvents(date: String, description: String, eventId: String, imgUrl: String, title: String): SlumsoccerEvents @aws_subscribe(mutations : ["createSlumsoccerEvents"])
+  onCreateSlumsoccerGallery(ef1: AWSJSON, galleryId: String, imgUrl: String, title: String): SlumsoccerGallery @aws_subscribe(mutations : ["createSlumsoccerGallery"])
+  onCreateSlumsoccerNews(description: String, imgUrl: String, newsId: String, newspaper: String, title: String): SlumsoccerNews @aws_subscribe(mutations : ["createSlumsoccerNews"])
+  onCreateSlumsoccerPartners(description: String, imgUrl: String, partnerId: String, partnershipType: String, title: String): SlumsoccerPartners @aws_subscribe(mutations : ["createSlumsoccerPartners"])
+  onCreateSlumsoccerProjects(description: String, hoverText: String, projectType: String, projectid: String, title: String): SlumsoccerProjects @aws_subscribe(mutations : ["createSlumsoccerProjects"])
+  onDeleteSlumsoccerBlogs(blogId: String, description: String, imgUrl: String, mainContent: AWSJSON, title: String): SlumsoccerBlogs @aws_subscribe(mutations : ["deleteSlumsoccerBlogs"])
+  onDeleteSlumsoccerEvents(date: String, description: String, eventId: String, imgUrl: String, title: String): SlumsoccerEvents @aws_subscribe(mutations : ["deleteSlumsoccerEvents"])
+  onDeleteSlumsoccerGallery(ef1: AWSJSON, galleryId: String, imgUrl: String, title: String): SlumsoccerGallery @aws_subscribe(mutations : ["deleteSlumsoccerGallery"])
+  onDeleteSlumsoccerNews(description: String, imgUrl: String, newsId: String, newspaper: String, title: String): SlumsoccerNews @aws_subscribe(mutations : ["deleteSlumsoccerNews"])
+  onDeleteSlumsoccerPartners(description: String, imgUrl: String, partnerId: String, partnershipType: String, title: String): SlumsoccerPartners @aws_subscribe(mutations : ["deleteSlumsoccerPartners"])
+  onDeleteSlumsoccerProjects(description: String, hoverText: String, projectType: String, projectid: String, title: String): SlumsoccerProjects @aws_subscribe(mutations : ["deleteSlumsoccerProjects"])
+  onUpdateSlumsoccerBlogs(blogId: String, description: String, imgUrl: String, mainContent: AWSJSON, title: String): SlumsoccerBlogs @aws_subscribe(mutations : ["updateSlumsoccerBlogs"])
+  onUpdateSlumsoccerEvents(date: String, description: String, eventId: String, imgUrl: String, title: String): SlumsoccerEvents @aws_subscribe(mutations : ["updateSlumsoccerEvents"])
+  onUpdateSlumsoccerGallery(ef1: AWSJSON, galleryId: String, imgUrl: String, title: String): SlumsoccerGallery @aws_subscribe(mutations : ["updateSlumsoccerGallery"])
+  onUpdateSlumsoccerNews(description: String, imgUrl: String, newsId: String, newspaper: String, title: String): SlumsoccerNews @aws_subscribe(mutations : ["updateSlumsoccerNews"])
+  onUpdateSlumsoccerPartners(description: String, imgUrl: String, partnerId: String, partnershipType: String, title: String): SlumsoccerPartners @aws_subscribe(mutations : ["updateSlumsoccerPartners"])
+  onUpdateSlumsoccerProjects(description: String, hoverText: String, projectType: String, projectid: String, title: String): SlumsoccerProjects @aws_subscribe(mutations : ["updateSlumsoccerProjects"])
+}
+
+input CreateSlumsoccerBlogsInput {
+  blogId: String!
+  date: String
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  imgUrl: String
+  mainContent: AWSJSON
+  title: String
+}
+
+input CreateSlumsoccerEventsInput {
+  date: String
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  eventId: String!
+  imgUrl: String
+  mainContent: AWSJSON
+  title: String
+}
+
+input CreateSlumsoccerGalleryInput {
+  ef1: AWSJSON
+  galleryId: String!
+  imgUrl: String
+  title: String
+}
+
+input CreateSlumsoccerNewsInput {
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  imgUrl: String
+  link: String
+  newsId: String!
+  newspaper: String
+  title: String
+}
+
+input CreateSlumsoccerPartnersInput {
+  description: String
+  ef1: AWSJSON
+  imgUrl: String
+  link: String
+  partnerId: String!
+  partnershipType: String
+  title: String
+}
+
+input CreateSlumsoccerProjectsInput {
+  description: String
+  hoverText: String
+  imgUrl: String
+  mainContent: AWSJSON
+  projectType: String
+  projectid: String!
+  title: String
+}
+
+input DeleteSlumsoccerBlogsInput {
+  blogId: String!
+}
+
+input DeleteSlumsoccerEventsInput {
+  eventId: String!
+}
+
+input DeleteSlumsoccerGalleryInput {
+  galleryId: String!
+}
+
+input DeleteSlumsoccerNewsInput {
+  newsId: String!
+}
+
+input DeleteSlumsoccerPartnersInput {
+  partnerId: String!
+}
+
+input DeleteSlumsoccerProjectsInput {
+  projectid: String!
+}
+
+input ModelSizeInput {
+  between: [Int]
+  eq: Int
+  ge: Int
+  gt: Int
+  le: Int
+  lt: Int
+  ne: Int
+}
+
+input TableBooleanFilterInput {
+  attributeExists: Boolean
+  eq: Boolean
+  ne: Boolean
+}
+
+input TableFloatFilterInput {
+  attributeExists: Boolean
+  between: [Float]
+  eq: Float
+  ge: Float
+  gt: Float
+  le: Float
+  lt: Float
+  ne: Float
+}
+
+input TableIDFilterInput {
+  attributeExists: Boolean
+  beginsWith: ID
+  between: [ID]
+  contains: ID
+  eq: ID
+  ge: ID
+  gt: ID
+  le: ID
+  lt: ID
+  ne: ID
+  notContains: ID
+  size: ModelSizeInput
+}
+
+input TableIntFilterInput {
+  attributeExists: Boolean
+  between: [Int]
+  eq: Int
+  ge: Int
+  gt: Int
+  le: Int
+  lt: Int
+  ne: Int
+}
+
+input TableSlumsoccerBlogsFilterInput {
+  blogId: TableStringFilterInput
+  date: TableStringFilterInput
+  description: TableStringFilterInput
+  imgUrl: TableStringFilterInput
+  title: TableStringFilterInput
+}
+
+input TableSlumsoccerEventsFilterInput {
+  date: TableStringFilterInput
+  description: TableStringFilterInput
+  eventId: TableStringFilterInput
+  imgUrl: TableStringFilterInput
+  title: TableStringFilterInput
+}
+
+input TableSlumsoccerGalleryFilterInput {
+  galleryId: TableStringFilterInput
+  imgUrl: TableStringFilterInput
+  title: TableStringFilterInput
+}
+
+input TableSlumsoccerNewsFilterInput {
+  description: TableStringFilterInput
+  imgUrl: TableStringFilterInput
+  link: TableStringFilterInput
+  newsId: TableStringFilterInput
+  newspaper: TableStringFilterInput
+  title: TableStringFilterInput
+}
+
+input TableSlumsoccerPartnersFilterInput {
+  description: TableStringFilterInput
+  imgUrl: TableStringFilterInput
+  link: TableStringFilterInput
+  partnerId: TableStringFilterInput
+  partnershipType: TableStringFilterInput
+  title: TableStringFilterInput
+}
+
+input TableSlumsoccerProjectsFilterInput {
+  description: TableStringFilterInput
+  hoverText: TableStringFilterInput
+  imgUrl: TableStringFilterInput
+  projectType: TableStringFilterInput
+  projectid: TableStringFilterInput
+  title: TableStringFilterInput
+}
+
+input TableStringFilterInput {
+  attributeExists: Boolean
+  beginsWith: String
+  between: [String]
+  contains: String
+  eq: String
+  ge: String
+  gt: String
+  le: String
+  lt: String
+  ne: String
+  notContains: String
+  size: ModelSizeInput
+}
+
+input UpdateSlumsoccerBlogsInput {
+  blogId: String!
+  date: String
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  imgUrl: String
+  mainContent: AWSJSON
+  title: String
+}
+
+input UpdateSlumsoccerEventsInput {
+  date: String
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  eventId: String!
+  imgUrl: String
+  mainContent: AWSJSON
+  title: String
+}
+
+input UpdateSlumsoccerGalleryInput {
+  ef1: AWSJSON
+  galleryId: String!
+  imgUrl: String
+  title: String
+}
+
+input UpdateSlumsoccerNewsInput {
+  description: String
+  ef1: AWSJSON
+  ef2: AWSJSON
+  imgUrl: String
+  link: String
+  newsId: String!
+  newspaper: String
+  title: String
+}
+
+input UpdateSlumsoccerPartnersInput {
+  description: String
+  ef1: AWSJSON
+  imgUrl: String
+  link: String
+  partnerId: String!
+  partnershipType: String
+  title: String
+}
+
+input UpdateSlumsoccerProjectsInput {
+  description: String
+  hoverText: String
+  imgUrl: String
+  mainContent: AWSJSON
+  projectType: String
+  projectid: String!
+  title: String
+}
