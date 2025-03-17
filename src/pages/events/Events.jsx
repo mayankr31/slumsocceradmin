@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { listSlumsoccerBlogs, getSlumsoccerBlogs } from "../graphql/queries";
-import { deleteSlumsoccerBlogs } from "../graphql/mutations";
+import { listSlumsoccerEvents, getSlumsoccerEvents } from "../../graphql/queries";
+import { deleteSlumsoccerEvents } from "../../graphql/mutations";
 import {
   CircularProgress,
   Button,
@@ -17,21 +17,23 @@ import {
   Tooltip,
   Menu,
   MenuItem,
+  Chip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SearchIcon from "@mui/icons-material/Search";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { generateClient } from "aws-amplify/api";
 
 const client = generateClient();
 
-export function Blogs() {
-  const [blogs, setBlogs] = useState([]);
+export function Events() {
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedBlog, setSelectedBlog] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [notification, setNotification] = useState({ open: false, message: "", severity: "success" });
@@ -39,72 +41,72 @@ export function Blogs() {
   const [filterDate, setFilterDate] = useState(null);
   const [datePeriods, setDatePeriods] = useState([]);
 
-  // Fetch blogs on component mount
+  // Fetch events on component mount
   useEffect(() => {
-    fetchBlogs();
+    fetchEvents();
   }, []);
 
-  const fetchBlogs = async () => {
+  const fetchEvents = async () => {
     try {
       setLoading(true);
-      const blogsData = await client.graphql({
-        query: listSlumsoccerBlogs,
+      const eventsData = await client.graphql({
+        query: listSlumsoccerEvents,
         variables: { limit: 100 }
       });
       
-      const blogItems = blogsData.data.listSlumsoccerBlogs.items;
-      setBlogs(blogItems);
+      const eventItems = eventsData.data.listSlumsoccerEvents.items;
+      setEvents(eventItems);
       
       // Extract unique months for filtering
-      const dates = [...new Set(blogItems.map(blog => {
-        if (!blog.date) return null;
-        const date = new Date(blog.date);
+      const dates = [...new Set(eventItems.map(event => {
+        if (!event.date) return null;
+        const date = new Date(event.date);
         return date.toLocaleString('default', { month: 'long', year: 'numeric' });
       }))].filter(Boolean);
       
       setDatePeriods(dates);
       
     } catch (err) {
-      console.error("Error fetching blogs:", err);
-      setError("Failed to load blogs. Please try again later.");
+      console.error("Error fetching events:", err);
+      setError("Failed to load events. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteClick = (blog) => {
-    setSelectedBlog(blog);
+  const handleDeleteClick = (event) => {
+    setSelectedEvent(event);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
     try {
       await client.graphql({
-        query: deleteSlumsoccerBlogs,
+        query: deleteSlumsoccerEvents,
         variables: {
           input: {
-            blogId: selectedBlog.blogId
+            eventId: selectedEvent.eventId
           }
         }
       });
       
-      // Remove deleted blog from state
-      setBlogs(blogs.filter(b => b.blogId !== selectedBlog.blogId));
+      // Remove deleted event from state
+      setEvents(events.filter(e => e.eventId !== selectedEvent.eventId));
       setNotification({
         open: true,
-        message: "Blog deleted successfully!",
+        message: "Event deleted successfully!",
         severity: "success"
       });
     } catch (err) {
-      console.error("Error deleting blog:", err);
+      console.error("Error deleting event:", err);
       setNotification({
         open: true,
-        message: "Failed to delete blog. Please try again.",
+        message: "Failed to delete event. Please try again.",
         severity: "error"
       });
     } finally {
       setDeleteDialogOpen(false);
-      setSelectedBlog(null);
+      setSelectedEvent(null);
     }
   };
 
@@ -146,13 +148,13 @@ export function Blogs() {
     return date.toLocaleString('default', { month: 'long', year: 'numeric' });
   };
 
-  // Filter and search blogs
-  const filteredBlogs = blogs
-    .filter(blog => !filterDate || getMonthYearFromDate(blog.date) === filterDate)
-    .filter(blog => 
+  // Filter and search events
+  const filteredEvents = events
+    .filter(event => !filterDate || getMonthYearFromDate(event.date) === filterDate)
+    .filter(event => 
       searchTerm === "" || 
-      blog.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      blog.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      event.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      event.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
   if (loading) {
@@ -174,7 +176,7 @@ export function Blogs() {
   return (
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 md:mb-0">Blogs</h1>
+        <h1 className="text-2xl font-bold mb-4 md:mb-0">Events</h1>
         <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
           {/* Search bar */}
           <div className="relative w-full md:w-64">
@@ -182,7 +184,7 @@ export function Blogs() {
               <SearchIcon className="text-gray-400" />
             </div>
             <TextField
-              placeholder="Search blogs..."
+              placeholder="Search events..."
               variant="outlined"
               size="small"
               fullWidth
@@ -222,72 +224,72 @@ export function Blogs() {
             </Menu>
           </div>
           
-          {/* Add new blog button */}
-          <Link to="/blogs/new">
+          {/* Add new event button */}
+          <Link to="/events/new">
             <Button
               variant="contained"
               color="primary"
               startIcon={<AddIcon />}
               style={{ textTransform: 'none', borderRadius: '8px' }}
             >
-              Add Blog
+              Add Event
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Blog list */}
+      {/* Event list */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        {filteredBlogs.length > 0 ? (
+        {filteredEvents.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blog</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBlogs.map((blog) => (
-                  <tr key={blog.blogId} className="hover:bg-gray-50">
+                {filteredEvents.map((event) => (
+                  <tr key={event.eventId} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {blog.imgUrl ? (
+                        {event.imgUrl ? (
                           <div className="h-10 w-10 rounded-md overflow-hidden mr-3">
                             <img 
-                              src={blog.imgUrl} 
-                              alt={blog.title} 
+                              src={event.imgUrl} 
+                              alt={event.title} 
                               className="h-full w-full object-cover"
                               onError={(e) => {
                                 e.target.onerror = null;
-                                e.target.src = "https://via.placeholder.com/40?text=No+Image";
+                                e.target.src = "https://via.placeholder.com/40?text=Event";
                               }}
                             />
                           </div>
                         ) : (
                           <div className="h-10 w-10 rounded-md bg-gray-200 mr-3 flex items-center justify-center text-gray-500">
-                            ?
+                            <CalendarTodayIcon fontSize="small" />
                           </div>
                         )}
-                        <div className="font-medium text-gray-900">{blog.title}</div>
+                        <div className="font-medium text-gray-900">{event.title}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                        {getFormattedDate(blog.date)}
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        {getFormattedDate(event.date)}
                       </span>
-                    </td>
+                    </td>                    
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500 truncate max-w-xs">
-                        {blog.description || "No description available"}
+                        {event.description || "No description available"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <Tooltip title="Edit">
-                          <Link to={`/blogs/edit/${blog.blogId}`}>
+                          <Link to={`/events/edit/${event.eventId}`}>
                             <IconButton size="small" color="primary">
                               <EditIcon fontSize="small" />
                             </IconButton>
@@ -297,7 +299,7 @@ export function Blogs() {
                           <IconButton 
                             size="small" 
                             color="error" 
-                            onClick={() => handleDeleteClick(blog)}
+                            onClick={() => handleDeleteClick(event)}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -311,20 +313,20 @@ export function Blogs() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <p className="text-gray-500">No blogs found</p>
+            <p className="text-gray-500">No events found</p>
             {searchTerm || filterDate ? (
               <p className="text-sm text-gray-400 mt-2">
                 Try adjusting your search or filter criteria
               </p>
             ) : (
-              <Link to="/blogs/new">
+              <Link to="/events/new">
                 <Button 
                   variant="outlined" 
                   color="primary" 
                   startIcon={<AddIcon />}
                   style={{ marginTop: '16px', textTransform: 'none' }}
                 >
-                  Add your first blog
+                  Add your first event
                 </Button>
               </Link>
             )}
@@ -337,10 +339,10 @@ export function Blogs() {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
       >
-        <DialogTitle>Delete Blog</DialogTitle>
+        <DialogTitle>Delete Event</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete "{selectedBlog?.title}"? This action cannot be undone.
+            Are you sure you want to delete "{selectedEvent?.title}"? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

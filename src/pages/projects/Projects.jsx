@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 // import { API } from "aws-amplify";
-import { listSlumsoccerProjects, getSlumsoccerProjects } from "../graphql/queries";
-import { deleteSlumsoccerProjects } from "../graphql/mutations";
+import { listSlumsoccerProjects, getSlumsoccerProjects } from "../../graphql/queries";
+import { deleteSlumsoccerProjects } from "../../graphql/mutations";
 import {
   CircularProgress,
   Button,

@@ -16,8 +16,8 @@ import {
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { generateClient } from "aws-amplify/api";
-import { getSlumsoccerGallery } from "../graphql/queries";
-import { createSlumsoccerGallery, updateSlumsoccerGallery } from "../graphql/mutations";
+import { getSlumsoccerGallery } from "../../graphql/queries";
+import { createSlumsoccerGallery, updateSlumsoccerGallery } from "../../graphql/mutations";
 import { v4 as uuidv4 } from "uuid"; // You'll need to install this package
 
 const client = generateClient();

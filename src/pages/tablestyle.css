@@ -1,0 +1,86 @@
+ /* Target the entire editor */
+ .ProseMirror {
+    position: relative;
+  }
+
+  /* Table styling */
+  .ProseMirror table {
+    border-collapse: collapse;
+    margin: 0;
+    overflow: hidden;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .ProseMirror td,
+  .ProseMirror th {
+    border: 1px solid #d1d5db;
+    box-sizing: border-box;
+    min-width: 1em;
+    padding: 6px 8px;
+    position: relative;
+    vertical-align: top;
+  }
+
+  .ProseMirror th {
+    background-color: #f3f4f6;
+    font-weight: bold;
+    text-align: left;
+  }
+
+  /* Selected cell styling */
+  .ProseMirror .selectedCell:after {
+    background: rgba(200, 200, 200, 0.4);
+    content: "";
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+  }
+
+  /* Table resize handle */
+  .ProseMirror .column-resize-handle {
+    background-color: blue;
+    bottom: 0;
+    position: absolute;
+    right: -2px;
+    top: 0;
+    width: 4px;
+    z-index: 30;
+    pointer-events: all;
+    cursor: col-resize;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Make resize handles visible on hover */
+  .ProseMirror .tableWrapper:hover .column-resize-handle {
+    opacity: 0.4;
+  }
+
+  /* Enhance visibility when actively hovering over handle */
+  .ProseMirror .column-resize-handle:hover {
+    opacity: 1;
+    background-color: blue;
+  }
+
+  /* Enhance visibility when dragging */
+  .ProseMirror .column-resize-handle.dragging {
+    opacity: 1;
+    background-color: blue;
+  }
+
+  /* Table wrapper for overflow handling */
+  .ProseMirror .tableWrapper {
+    margin: 1rem 1rem;
+    overflow-x: auto;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Cursor styling during resize */
+  .ProseMirror.resize-cursor {
+    cursor: col-resize !important;
+  }

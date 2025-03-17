@@ -6,6 +6,8 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CollectionsIcon from '@mui/icons-material/Collections';
+import HandshakeIcon from '@mui/icons-material/Handshake';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
 import { IconButton } from "@mui/material";
 import { NavLink } from "react-router-dom";
 
@@ -15,7 +17,9 @@ export function Sidebar({ isOpen, onToggle }) {
     { path: "/projects", name: "Projects", icon: FolderOpenIcon },
     { path: "/blogs", name: "Blogs", icon: ImportContactsIcon },
     { path: "/events", name: "Events", icon: EventNoteIcon },
-    {path: '/gallery', name: 'Gallery', icon: CollectionsIcon},
+    { path: '/gallery', name: 'Gallery', icon: CollectionsIcon},
+    { path: '/partners', name: 'Partners', icon: HandshakeIcon},
+    { path: '/news', name: 'News', icon: NewspaperIcon},
   ];
 
   return (

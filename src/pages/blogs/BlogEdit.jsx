@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 // import { API } from "aws-amplify";
-import { getSlumsoccerProjects } from "../graphql/queries";
+import { getSlumsoccerBlogs, getSlumsoccerProjects } from "../../graphql/queries";
 import {
+  createSlumsoccerBlogs,
   createSlumsoccerProjects,
+  updateSlumsoccerBlogs,
   updateSlumsoccerProjects,
-} from "../graphql/mutations";
+} from "../../graphql/mutations";
 import { v4 as uuidv4 } from "uuid";
 import {
   Button,
@@ -37,8 +39,8 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import BoldIcon from "@mui/icons-material/FormatBold";
-import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
-import BorderHorizontalIcon from '@mui/icons-material/BorderHorizontal';
+import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
+import BorderHorizontalIcon from "@mui/icons-material/BorderHorizontal";
 import ItalicIcon from "@mui/icons-material/FormatItalic";
 import UnderlineIcon from "@mui/icons-material/FormatUnderlined";
 import StrikethroughIcon from "@mui/icons-material/StrikethroughS";
@@ -51,8 +53,8 @@ import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import FormatClearIcon from "@mui/icons-material/FormatClear";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
-import TableChartIcon from '@mui/icons-material/TableChart';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import TableChartIcon from "@mui/icons-material/TableChart";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { generateClient } from "aws-amplify/api";
 import { Color } from "@tiptap/extension-color";
 import ListItem from "@tiptap/extension-list-item";
@@ -67,6 +69,7 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import HardBreak from "@tiptap/extension-hard-break";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
+import '../tablestyle.css'
 
 const client = generateClient();
 
@@ -85,37 +88,35 @@ const MenuButton = ({ onClick, active, disabled, children, title }) => (
   </Tooltip>
 );
 
-export function ProjectEdit() {
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-  const isNewProject = window.location.pathname.includes('/projects/new');
+const formatDate = (isoString) => {
+  const options = { month: "short", day: "2-digit", year: "numeric" };
+  return new Date(isoString).toLocaleDateString("en-US", options);
+};
 
-  const [project, setProject] = useState({
-    projectid: "",
+export default function BlogEdit() {
+  const { blogId } = useParams();
+  const navigate = useNavigate();
+  // const isNewBlog = blogId === "new";
+  const isNewBlog = window.location.pathname.includes('/blogs/new');
+
+  const [blog, setBlog] = useState({
+    blogId: "",
     title: "",
-    projectType: "",
     description: "",
-    hoverText: "",
     imgUrl: "",
     mainContent: { html: "" },
+    date: new Date().toISOString().split("T")[0],
   });
 
-  const [loading, setLoading] = useState(!isNewProject);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!isNewBlog);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  // const [previewMode, setPreviewMode] = useState(false);
-  const [projectTypes] = useState([
-    "Empowerment",
-    "Leadership",
-    "Popular",
-    "Tournament",
-    "Featured",
-  ]);
+
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -132,9 +133,12 @@ export function ProjectEdit() {
     p: "block mt-[1em] mb-[1em] mx-0 [unicode-bidi:isolate]",
     a: "text-[blue] cursor-pointer underline",
     u: "underline",
-    table: "table border-collapse border border-[gray] border-spacing-[2px] overflow-hidden w-full m-0 table-fixed [unicode-bidi:isolate]",
-    tableCell: "table-cell border border-gray-300 p-2 box-border min-w-[1em] px-[8px] py-[6px] relative align-top ",
-    tableHeader: "table-cell border border-gray-300 bg-gray-100 box-border p-2 font-bold text-left min-w-[1em] px-[8px] py-[6px] relative align-top",
+    table:
+      "table border-collapse border border-[gray] border-spacing-[2px] overflow-hidden w-full m-0 table-fixed [unicode-bidi:isolate]",
+    tableCell:
+      "table-cell border border-gray-300 p-2 box-border min-w-[1em] px-[8px] py-[6px] relative align-top ",
+    tableHeader:
+      "table-cell border border-gray-300 bg-gray-100 box-border p-2 font-bold text-left min-w-[1em] px-[8px] py-[6px] relative align-top",
     hr: "border-none h-[2px] bg-gray-300 my-4",
   };
 
@@ -158,6 +162,8 @@ export function ProjectEdit() {
     },
   });
 
+  //for storing the editor content without causing re-renders
+  const editorContentRef = useRef("");
 
   // Initialize TipTap editor
   const editor = useEditor({
@@ -198,9 +204,9 @@ export function ProjectEdit() {
       }),
       CustomHeading,
       Underline.configure({
-        HTMLAttributes:{
-          class: editorCSS.u
-        }
+        HTMLAttributes: {
+          class: editorCSS.u,
+        },
       }),
       Placeholder.configure({
         placeholder: "Write your content here...",
@@ -213,7 +219,6 @@ export function ProjectEdit() {
         HTMLAttributes: {
           class: editorCSS.table,
         },
-        
       }),
       TableRow,
       TableHeader.configure({
@@ -228,10 +233,9 @@ export function ProjectEdit() {
       }),
       HardBreak,
     ],
-    content: project.mainContent
-      ? typeof project.mainContent === "string" &&
-        project.mainContent.trim() !== ""
-        ? JSON.parse(project.mainContent).html
+    content: blog.mainContent
+      ? typeof blog.mainContent === "string" && blog.mainContent.trim() !== ""
+        ? JSON.parse(blog.mainContent).html
         : ""
       : "",
     onUpdate: ({ editor }) => {
@@ -239,66 +243,65 @@ export function ProjectEdit() {
     },
   });
 
-  //for storing the editor content without causing re-renders
-  const editorContentRef = useRef("");
-
-  // Fetch project data if editing an existing project
   useEffect(() => {
-    if (!isNewProject) {
-      fetchProject();
+    if (!isNewBlog) {
+      fetchBlog();
     } else {
-      setProject({
-        projectid: uuidv4(),
+      setBlog({
+        blogId: uuidv4(),
         title: "",
-        projectType: "",
         description: "",
-        hoverText: "",
         imgUrl: "",
         mainContent: { html: "" },
+        date: new Date().toISOString().split("T")[0],
       });
     }
-  }, [projectId]);
+  }, [blogId]);
 
-  // Update editor content when project data changes
+  // Update editor content when blog data changes
   useEffect(() => {
-    if (editor && project.mainContent) {
+    if (editor && blog.mainContent) {
       try {
-        const contentObj = JSON.parse(JSON.parse(project.mainContent));
+        const contentObj = JSON.parse(JSON.parse(blog.mainContent));
         if (contentObj && contentObj.html) {
           editor.commands.setContent(contentObj.html);
         }
       } catch (err) {
         // Handle case where mainContent might not be in JSON format yet
         console.warn("Error parsing mainContent:", err);
-        editor.commands.setContent(project.mainContent.html);
+        editor.commands.setContent(blog.mainContent.html);
       }
     }
-  }, [editor, project.mainContent]);
+  }, [editor, blog.mainContent]);
 
   // Set image preview when imgUrl changes
   useEffect(() => {
-    if (project.imgUrl) {
-      setImagePreview(project.imgUrl);
+    if (blog.imgUrl) {
+      setImagePreview(blog.imgUrl);
     }
-  }, [project.imgUrl]);
+  }, [blog.imgUrl]);
 
-  const fetchProject = async () => {
+  const fetchBlog = async () => {
     try {
       setLoading(true);
       const response = await client.graphql({
-        query: getSlumsoccerProjects,
-        variables: { projectid: projectId },
+        query: getSlumsoccerBlogs,
+        variables: { blogId: blogId },
       });
 
-      const projectData = response.data.getSlumsoccerProjects;
-      if (projectData) {
-        setProject(projectData);
+      const blogData = response.data.getSlumsoccerBlogs;
+      if (blogData) {
+        // Format date to YYYY-MM-DD for date input if it exists
+        if (blogData.date) {
+          blogData.date = new Date(blogData.date).toISOString().split("T")[0];
+        }
+        setBlog(blogData);
       } else {
-        setError("Project not found");
+        setError("Blog not found");
       }
     } catch (err) {
-      console.error("Error fetching project:", err);
-      setError("Failed to load project. Please try again later.");
+      console.error("Error fetching blog:", err);
+      setError("Failed to load blog. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -306,7 +309,7 @@ export function ProjectEdit() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setProject((prev) => ({ ...prev, [name]: value }));
+    setBlog((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
@@ -360,7 +363,7 @@ export function ProjectEdit() {
   };
 
   const handleEditorChange = () => {
-    setProject((prev) => ({
+    setBlog((prev) => ({
       ...prev,
       mainContent: JSON.stringify(
         JSON.stringify({ html: editorContentRef.current })
@@ -373,76 +376,76 @@ export function ProjectEdit() {
       setSaving(true);
 
       // Validate required fields
-      if (!project.title) {
+      if (!blog.title) {
         setNotification({
           open: true,
-          message: "Project title is required",
+          message: "Blog title is required",
           severity: "error",
         });
         return;
       }
 
       // Upload image to S3 if a new file is selected
-      let finalImgUrl = project.imgUrl;
+      let finalImgUrl = blog.imgUrl;
       if (imageFile) {
         const uploadedUrl = await uploadImageToS3(imageFile);
         if (uploadedUrl) {
           finalImgUrl = uploadedUrl;
         } else {
           // If upload failed, keep using the existing URL or empty string
-          finalImgUrl = project.imgUrl || "";
+          finalImgUrl = blog.imgUrl || "";
         }
       }
 
+      // Format date to ISO string for saving
+      const formattedDate = blog.date ? new Date(blog.date).toISOString() : new Date().toISOString();
+
       const input = {
-        projectid: project.projectid,
-        title: project.title,
-        projectType: project.projectType,
-        description: project.description || "",
-        hoverText: project.hoverText || "",
+        blogId: blog.blogId,
+        title: blog.title,
+        description: blog.description || "",
         // imgUrl: project.imgUrl || "",
         imgUrl: finalImgUrl || "",
         mainContent:
-          typeof project.mainContent === "string"
-            ? project.mainContent
-            : JSON.stringify(
-                JSON.stringify({ html: project.mainContent || "" })
-              ),
+          typeof blog.mainContent === "string"
+            ? blog.mainContent
+            : JSON.stringify(JSON.stringify({ html: blog.mainContent || "" })),
+        date: formattedDate || new Date().toISOString().split('T')[0],
       };
 
-      if (isNewProject) {
+      if (isNewBlog) {
         await client.graphql({
-          query: createSlumsoccerProjects,
+          query: createSlumsoccerBlogs,
           variables: { input },
         });
         setNotification({
           open: true,
-          message: "Project created successfully!",
+          message: "Blog created successfully!",
           severity: "success",
         });
       } else {
         await client.graphql({
-          query: updateSlumsoccerProjects,
+          query: updateSlumsoccerBlogs,
           variables: { input },
         });
         setNotification({
           open: true,
-          message: "Project updated successfully!",
+          message: "Blog updated successfully!",
           severity: "success",
         });
       }
 
       // Redirect after short delay
       setTimeout(() => {
-        navigate("/projects");
+        navigate("/blogs");
       }, 1500);
     } catch (err) {
-      console.error("Error saving project:", err);
+      console.error("Error saving blog:", err);
       setNotification({
         open: true,
         message: `Failed to ${
-          isNewProject ? "create" : "update"
-        } project. Please try again.`,
+          isNewBlog ? "create" : "update"
+        } blog. Please try again.`,
         severity: "error",
       });
     } finally {
@@ -453,7 +456,7 @@ export function ProjectEdit() {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview("");
-    setProject((prev) => ({ ...prev, imgUrl: "" }));
+    setBlog((prev) => ({ ...prev, imgUrl: "" }));
   };
 
   const handleCloseNotification = () => {
@@ -539,7 +542,6 @@ export function ProjectEdit() {
     handleTableMenuClose();
   };
 
-
   if (loading) {
     return (
       <div className="p-6 flex justify-center items-center h-screen">
@@ -554,10 +556,10 @@ export function ProjectEdit() {
         <Alert severity="error">{error}</Alert>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/projects")}
+          onClick={() => navigate("/blogs")}
           style={{ marginTop: "16px" }}
         >
-          Back to Projects
+          Back to Blogs
         </Button>
       </div>
     );
@@ -569,13 +571,13 @@ export function ProjectEdit() {
         <div className="flex items-center">
           <Button
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate("/projects")}
+            onClick={() => navigate("/blogs")}
             style={{ marginRight: "16px" }}
           >
             Back
           </Button>
           <h1 className="text-2xl font-bold">
-            {isNewProject ? "Create New Project" : "Edit Project"}
+            {isNewBlog ? "Create New Blog" : "Edit Blog"}
           </h1>
         </div>
         <div className="space-x-2">
@@ -587,19 +589,19 @@ export function ProjectEdit() {
             disabled={saving}
             style={{ textTransform: "none" }}
           >
-            {saving ? "Saving..." : "Save Project"}
+            {saving ? "Saving..." : "Save Blog"}
           </Button>
         </div>
       </div>
 
       <Paper className="p-6">
         <Grid container spacing={3}>
-          {/* Basic Project Info */}
+          {/* Basic Blog Info */}
           <Grid item xs={12} md={6}>
             <TextField
-              label="Project Title *"
+              label="Blog Title *"
               name="title"
-              value={project.title}
+              value={blog.title}
               onChange={handleInputChange}
               fullWidth
               margin="normal"
@@ -608,51 +610,33 @@ export function ProjectEdit() {
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth margin="normal" variant="outlined">
-              <InputLabel id="project-type-label">Project Type</InputLabel>
-              <Select
-                labelId="project-type-label"
-                id="projectType"
-                name="projectType"
-                value={project.projectType}
-                onChange={handleInputChange}
-                label="Project Type"
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {projectTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              label="Publication Date"
+              name="date"
+              type="date"
+              value={blog.date}
+              onChange={handleInputChange}
+              fullWidth
+              margin="normal"
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              helperText="Set the publication date for this blog post"
+            />
           </Grid>
           <Grid item xs={12}>
             <TextField
               label="Description"
               name="description"
-              value={project.description}
+              value={blog.description}
               onChange={handleInputChange}
               fullWidth
               margin="normal"
               variant="outlined"
               multiline
               rows={2}
-              helperText="Brief description of the project"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              label="Hover Text"
-              name="hoverText"
-              value={project.hoverText}
-              onChange={handleInputChange}
-              fullWidth
-              margin="normal"
-              variant="outlined"
-              helperText="Text to show on hover (optional)"
+              helperText="Brief description of the blog"
             />
           </Grid>
           <Grid item xs={12}>
@@ -687,7 +671,7 @@ export function ProjectEdit() {
                 <Box sx={{ mt: 2, position: "relative", width: "fit-content" }}>
                   <img
                     src={imagePreview}
-                    alt="Project preview"
+                    alt="Blog preview"
                     style={{
                       maxWidth: "100%",
                       maxHeight: "300px",
@@ -718,7 +702,7 @@ export function ProjectEdit() {
 
         {/* Content Editor */}
         <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-3">Project Content</h2>
+          <h2 className="text-lg font-semibold mb-3">Blog Content</h2>
 
           <div className="bg-gray-50 p-2 rounded-t-lg border border-gray-300 flex flex-wrap">
             <MenuButton
@@ -800,7 +784,7 @@ export function ProjectEdit() {
               disabled={!editor}
               title="Bullet List"
             >
-              <FormatListBulletedIcon  />
+              <FormatListBulletedIcon />
             </MenuButton>
             <MenuButton
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -808,7 +792,7 @@ export function ProjectEdit() {
               disabled={!editor}
               title="Numbered List"
             >
-              <FormatListNumberedIcon  />
+              <FormatListNumberedIcon />
             </MenuButton>
 
             <Divider
@@ -828,47 +812,95 @@ export function ProjectEdit() {
               <InsertPhotoIcon fontSize="small" />
             </MenuButton>
 
-            {/* <Box sx={{ position: 'relative'}}> */}
-              <IconButton
-                size="small"
-                className="m-1"
-                onClick={handleTableMenuOpen}
-                color={editor?.isActive("table") ? "primary" : "default"}
-                disabled={!editor}
-                aria-controls="table-menu"
-                aria-haspopup="true"
+            <IconButton
+              size="small"
+              className="m-1"
+              onClick={handleTableMenuOpen}
+              color={editor?.isActive("table") ? "primary" : "default"}
+              disabled={!editor}
+              aria-controls="table-menu"
+              aria-haspopup="true"
+            >
+              <TableChartIcon fontSize="small" />
+              <ArrowDropDownIcon fontSize="small" />
+            </IconButton>
+            <Menu
+              id="table-menu"
+              anchorEl={tableMenuAnchorEl}
+              open={Boolean(tableMenuAnchorEl)}
+              onClose={handleTableMenuClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
+            >
+              <MenuItem onClick={insertTable}>Insert Table</MenuItem>
+              <Divider />
+              <MenuItem
+                onClick={addColumnBefore}
+                disabled={!editor?.isActive("table")}
               >
-                <TableChartIcon fontSize="small" />
-                <ArrowDropDownIcon fontSize="small" />
-              </IconButton>
-              <Menu
-                id="table-menu"
-                anchorEl={tableMenuAnchorEl}
-                open={Boolean(tableMenuAnchorEl)}
-                onClose={handleTableMenuClose}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
+                Add Column Before
+              </MenuItem>
+              <MenuItem
+                onClick={addColumnAfter}
+                disabled={!editor?.isActive("table")}
               >
-                <MenuItem onClick={insertTable}>Insert Table</MenuItem>
-                <Divider />
-                <MenuItem onClick={addColumnBefore} disabled={!editor?.isActive("table")}>Add Column Before</MenuItem>
-                <MenuItem onClick={addColumnAfter} disabled={!editor?.isActive("table")}>Add Column After</MenuItem>
-                <MenuItem onClick={deleteColumn} disabled={!editor?.isActive("table")}>Delete Column</MenuItem>
-                <Divider />
-                <MenuItem onClick={addRowBefore} disabled={!editor?.isActive("table")}>Add Row Before</MenuItem>
-                <MenuItem onClick={addRowAfter} disabled={!editor?.isActive("table")}>Add Row After</MenuItem>
-                <MenuItem onClick={deleteRow} disabled={!editor?.isActive("table")}>Delete Row</MenuItem>
-                <Divider />
-                <MenuItem onClick={toggleHeaderCell} disabled={!editor?.isActive("table")}>Toggle Header Cell</MenuItem>
-                <MenuItem onClick={mergeCells} disabled={!editor?.isActive("table")}>Merge Cells</MenuItem>
-                <MenuItem onClick={splitCell} disabled={!editor?.isActive("table")}>Split Cell</MenuItem>
-                <Divider />
-                <MenuItem onClick={deleteTable} disabled={!editor?.isActive("table")}>Delete Table</MenuItem>
-              </Menu>
-            {/* </Box> */}
-            
+                Add Column After
+              </MenuItem>
+              <MenuItem
+                onClick={deleteColumn}
+                disabled={!editor?.isActive("table")}
+              >
+                Delete Column
+              </MenuItem>
+              <Divider />
+              <MenuItem
+                onClick={addRowBefore}
+                disabled={!editor?.isActive("table")}
+              >
+                Add Row Before
+              </MenuItem>
+              <MenuItem
+                onClick={addRowAfter}
+                disabled={!editor?.isActive("table")}
+              >
+                Add Row After
+              </MenuItem>
+              <MenuItem
+                onClick={deleteRow}
+                disabled={!editor?.isActive("table")}
+              >
+                Delete Row
+              </MenuItem>
+              <Divider />
+              <MenuItem
+                onClick={toggleHeaderCell}
+                disabled={!editor?.isActive("table")}
+              >
+                Toggle Header Cell
+              </MenuItem>
+              <MenuItem
+                onClick={mergeCells}
+                disabled={!editor?.isActive("table")}
+              >
+                Merge Cells
+              </MenuItem>
+              <MenuItem
+                onClick={splitCell}
+                disabled={!editor?.isActive("table")}
+              >
+                Split Cell
+              </MenuItem>
+              <Divider />
+              <MenuItem
+                onClick={deleteTable}
+                disabled={!editor?.isActive("table")}
+              >
+                Delete Table
+              </MenuItem>
+            </Menu>
+
             {/* Hard Break and Horizontal Rule */}
             <MenuButton
               onClick={() => editor.chain().focus().setHardBreak().run()}
@@ -883,18 +915,6 @@ export function ProjectEdit() {
               title="Horizontal Rule"
             >
               <BorderHorizontalIcon fontSize="small" />
-            </MenuButton>
-            <Divider
-              orientation="vertical"
-              flexItem
-              style={{ margin: "0 8px" }}
-            />
-            <MenuButton
-              onClick={() => editor.chain().focus().unsetAllMarks().run()}
-              disabled={!editor}
-              title="Clear Formatting"
-            >
-              <FormatClearIcon fontSize="small" />
             </MenuButton>
             <Divider
               orientation="vertical"
@@ -919,13 +939,17 @@ export function ProjectEdit() {
               orientation="vertical"
               flexItem
               style={{ margin: "0 8px" }}
-            />            
+            />
             <Tooltip title="Save">
               <Button
                 onClick={handleEditorChange}
                 size="small"
                 variant="contained"
-                sx={{ fontWeight: 'bold', backgroundColor: 'black', marginLeft: 'auto' }}
+                sx={{
+                  fontWeight: "bold",
+                  backgroundColor: "black",
+                  marginLeft: "auto",
+                }}
               >
                 Save
               </Button>

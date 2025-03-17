@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getSlumsoccerEvents } from "../graphql/queries";
+import { getSlumsoccerEvents } from "../../graphql/queries";
 import {
   createSlumsoccerEvents,
   updateSlumsoccerEvents,
-} from "../graphql/mutations";
+} from "../../graphql/mutations";
 import { v4 as uuidv4 } from "uuid";
 import {
   Button,
@@ -65,6 +65,8 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import HardBreak from "@tiptap/extension-hard-break";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
+import '../tablestyle.css'
+
 
 const client = generateClient();
 

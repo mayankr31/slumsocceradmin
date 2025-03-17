@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 // import { API } from "aws-amplify";
-import { getSlumsoccerBlogs, getSlumsoccerProjects } from "../graphql/queries";
+import { getSlumsoccerProjects } from "../../graphql/queries";
 import {
-  createSlumsoccerBlogs,
   createSlumsoccerProjects,
-  updateSlumsoccerBlogs,
   updateSlumsoccerProjects,
-} from "../graphql/mutations";
+} from "../../graphql/mutations";
 import { v4 as uuidv4 } from "uuid";
 import {
   Button,
@@ -69,6 +67,7 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import HardBreak from "@tiptap/extension-hard-break";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
+import '../tablestyle.css';
 
 const client = generateClient();
 
@@ -87,35 +86,37 @@ const MenuButton = ({ onClick, active, disabled, children, title }) => (
   </Tooltip>
 );
 
-const formatDate = (isoString) => {
-  const options = { month: "short", day: "2-digit", year: "numeric" };
-  return new Date(isoString).toLocaleDateString("en-US", options);
-};
-
-export default function BlogEdit() {
-  const { blogId } = useParams();
+export function ProjectEdit() {
+  const { projectId } = useParams();
   const navigate = useNavigate();
-  // const isNewBlog = blogId === "new";
-  const isNewBlog = window.location.pathname.includes('/blogs/new');
+  const isNewProject = window.location.pathname.includes("/projects/new");
 
-  const [blog, setBlog] = useState({
-    blogId: "",
+  const [project, setProject] = useState({
+    projectid: "",
     title: "",
+    projectType: "",
     description: "",
+    hoverText: "",
     imgUrl: "",
     mainContent: { html: "" },
-    date: new Date().toISOString().split("T")[0],
   });
 
-  const [loading, setLoading] = useState(!isNewBlog);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(!isNewProject);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [notification, setNotification] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-
+  // const [previewMode, setPreviewMode] = useState(false);
+  const [projectTypes] = useState([
+    "Empowerment",
+    "Leadership",
+    "Popular",
+    "Tournament",
+    "Featured",
+  ]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -160,9 +161,6 @@ export default function BlogEdit() {
       ];
     },
   });
-
-  //for storing the editor content without causing re-renders
-  const editorContentRef = useRef("");
 
   // Initialize TipTap editor
   const editor = useEditor({
@@ -232,9 +230,10 @@ export default function BlogEdit() {
       }),
       HardBreak,
     ],
-    content: blog.mainContent
-      ? typeof blog.mainContent === "string" && blog.mainContent.trim() !== ""
-        ? JSON.parse(blog.mainContent).html
+    content: project.mainContent
+      ? typeof project.mainContent === "string" &&
+        project.mainContent.trim() !== ""
+        ? JSON.parse(project.mainContent).html
         : ""
       : "",
     onUpdate: ({ editor }) => {
@@ -242,65 +241,66 @@ export default function BlogEdit() {
     },
   });
 
+  //for storing the editor content without causing re-renders
+  const editorContentRef = useRef("");
+
+  // Fetch project data if editing an existing project
   useEffect(() => {
-    if (!isNewBlog) {
-      fetchBlog();
+    if (!isNewProject) {
+      fetchProject();
     } else {
-      setBlog({
-        blogId: uuidv4(),
+      setProject({
+        projectid: uuidv4(),
         title: "",
+        projectType: "",
         description: "",
+        hoverText: "",
         imgUrl: "",
         mainContent: { html: "" },
-        date: new Date().toISOString().split("T")[0],
       });
     }
-  }, [blogId]);
+  }, [projectId]);
 
-  // Update editor content when blog data changes
+  // Update editor content when project data changes
   useEffect(() => {
-    if (editor && blog.mainContent) {
+    if (editor && project.mainContent) {
       try {
-        const contentObj = JSON.parse(JSON.parse(blog.mainContent));
+        const contentObj = JSON.parse(JSON.parse(project.mainContent));
         if (contentObj && contentObj.html) {
           editor.commands.setContent(contentObj.html);
         }
       } catch (err) {
         // Handle case where mainContent might not be in JSON format yet
         console.warn("Error parsing mainContent:", err);
-        editor.commands.setContent(blog.mainContent.html);
+        editor.commands.setContent(project.mainContent.html);
       }
     }
-  }, [editor, blog.mainContent]);
+  }, [editor, project.mainContent]);
 
   // Set image preview when imgUrl changes
   useEffect(() => {
-    if (blog.imgUrl) {
-      setImagePreview(blog.imgUrl);
+    if (project.imgUrl) {
+      setImagePreview(project.imgUrl);
     }
-  }, [blog.imgUrl]);
+  }, [project.imgUrl]);
 
-  const fetchBlog = async () => {
+  const fetchProject = async () => {
     try {
       setLoading(true);
       const response = await client.graphql({
-        query: getSlumsoccerBlogs,
-        variables: { blogId: blogId },
+        query: getSlumsoccerProjects,
+        variables: { projectid: projectId },
       });
 
-      const blogData = response.data.getSlumsoccerBlogs;
-      if (blogData) {
-        // Format date to YYYY-MM-DD for date input if it exists
-        if (blogData.date) {
-          blogData.date = new Date(blogData.date).toISOString().split("T")[0];
-        }
-        setBlog(blogData);
+      const projectData = response.data.getSlumsoccerProjects;
+      if (projectData) {
+        setProject(projectData);
       } else {
-        setError("Blog not found");
+        setError("Project not found");
       }
     } catch (err) {
-      console.error("Error fetching blog:", err);
-      setError("Failed to load blog. Please try again later.");
+      console.error("Error fetching project:", err);
+      setError("Failed to load project. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -308,7 +308,7 @@ export default function BlogEdit() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setBlog((prev) => ({ ...prev, [name]: value }));
+    setProject((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
@@ -362,7 +362,7 @@ export default function BlogEdit() {
   };
 
   const handleEditorChange = () => {
-    setBlog((prev) => ({
+    setProject((prev) => ({
       ...prev,
       mainContent: JSON.stringify(
         JSON.stringify({ html: editorContentRef.current })
@@ -375,76 +375,76 @@ export default function BlogEdit() {
       setSaving(true);
 
       // Validate required fields
-      if (!blog.title) {
+      if (!project.title) {
         setNotification({
           open: true,
-          message: "Blog title is required",
+          message: "Project title is required",
           severity: "error",
         });
         return;
       }
 
       // Upload image to S3 if a new file is selected
-      let finalImgUrl = blog.imgUrl;
+      let finalImgUrl = project.imgUrl;
       if (imageFile) {
         const uploadedUrl = await uploadImageToS3(imageFile);
         if (uploadedUrl) {
           finalImgUrl = uploadedUrl;
         } else {
           // If upload failed, keep using the existing URL or empty string
-          finalImgUrl = blog.imgUrl || "";
+          finalImgUrl = project.imgUrl || "";
         }
       }
 
-      // Format date to ISO string for saving
-      const formattedDate = blog.date ? new Date(blog.date).toISOString() : new Date().toISOString();
-
       const input = {
-        blogId: blog.blogId,
-        title: blog.title,
-        description: blog.description || "",
+        projectid: project.projectid,
+        title: project.title,
+        projectType: project.projectType,
+        description: project.description || "",
+        hoverText: project.hoverText || "",
         // imgUrl: project.imgUrl || "",
         imgUrl: finalImgUrl || "",
         mainContent:
-          typeof blog.mainContent === "string"
-            ? blog.mainContent
-            : JSON.stringify(JSON.stringify({ html: blog.mainContent || "" })),
-        date: formattedDate || new Date().toISOString().split('T')[0],
+          typeof project.mainContent === "string"
+            ? project.mainContent
+            : JSON.stringify(
+                JSON.stringify({ html: project.mainContent || "" })
+              ),
       };
 
-      if (isNewBlog) {
+      if (isNewProject) {
         await client.graphql({
-          query: createSlumsoccerBlogs,
+          query: createSlumsoccerProjects,
           variables: { input },
         });
         setNotification({
           open: true,
-          message: "Blog created successfully!",
+          message: "Project created successfully!",
           severity: "success",
         });
       } else {
         await client.graphql({
-          query: updateSlumsoccerBlogs,
+          query: updateSlumsoccerProjects,
           variables: { input },
         });
         setNotification({
           open: true,
-          message: "Blog updated successfully!",
+          message: "Project updated successfully!",
           severity: "success",
         });
       }
 
       // Redirect after short delay
       setTimeout(() => {
-        navigate("/blogs");
+        navigate("/projects");
       }, 1500);
     } catch (err) {
-      console.error("Error saving blog:", err);
+      console.error("Error saving project:", err);
       setNotification({
         open: true,
         message: `Failed to ${
-          isNewBlog ? "create" : "update"
-        } blog. Please try again.`,
+          isNewProject ? "create" : "update"
+        } project. Please try again.`,
         severity: "error",
       });
     } finally {
@@ -455,7 +455,7 @@ export default function BlogEdit() {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview("");
-    setBlog((prev) => ({ ...prev, imgUrl: "" }));
+    setProject((prev) => ({ ...prev, imgUrl: "" }));
   };
 
   const handleCloseNotification = () => {
@@ -555,10 +555,10 @@ export default function BlogEdit() {
         <Alert severity="error">{error}</Alert>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/blogs")}
+          onClick={() => navigate("/projects")}
           style={{ marginTop: "16px" }}
         >
-          Back to Blogs
+          Back to Projects
         </Button>
       </div>
     );
@@ -570,13 +570,13 @@ export default function BlogEdit() {
         <div className="flex items-center">
           <Button
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate("/blogs")}
+            onClick={() => navigate("/projects")}
             style={{ marginRight: "16px" }}
           >
             Back
           </Button>
           <h1 className="text-2xl font-bold">
-            {isNewBlog ? "Create New Blog" : "Edit Blog"}
+            {isNewProject ? "Create New Project" : "Edit Project"}
           </h1>
         </div>
         <div className="space-x-2">
@@ -588,19 +588,19 @@ export default function BlogEdit() {
             disabled={saving}
             style={{ textTransform: "none" }}
           >
-            {saving ? "Saving..." : "Save Blog"}
+            {saving ? "Saving..." : "Save Project"}
           </Button>
         </div>
       </div>
 
       <Paper className="p-6">
         <Grid container spacing={3}>
-          {/* Basic Blog Info */}
+          {/* Basic Project Info */}
           <Grid item xs={12} md={6}>
             <TextField
-              label="Blog Title *"
+              label="Project Title *"
               name="title"
-              value={blog.title}
+              value={project.title}
               onChange={handleInputChange}
               fullWidth
               margin="normal"
@@ -609,33 +609,51 @@ export default function BlogEdit() {
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <TextField
-              label="Publication Date"
-              name="date"
-              type="date"
-              value={blog.date}
-              onChange={handleInputChange}
-              fullWidth
-              margin="normal"
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              helperText="Set the publication date for this blog post"
-            />
+            <FormControl fullWidth margin="normal" variant="outlined">
+              <InputLabel id="project-type-label">Project Type</InputLabel>
+              <Select
+                labelId="project-type-label"
+                id="projectType"
+                name="projectType"
+                value={project.projectType}
+                onChange={handleInputChange}
+                label="Project Type"
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {projectTypes.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12}>
             <TextField
               label="Description"
               name="description"
-              value={blog.description}
+              value={project.description}
               onChange={handleInputChange}
               fullWidth
               margin="normal"
               variant="outlined"
               multiline
               rows={2}
-              helperText="Brief description of the blog"
+              helperText="Brief description of the project"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Hover Text"
+              name="hoverText"
+              value={project.hoverText}
+              onChange={handleInputChange}
+              fullWidth
+              margin="normal"
+              variant="outlined"
+              helperText="Text to show on hover (optional)"
             />
           </Grid>
           <Grid item xs={12}>
@@ -670,7 +688,7 @@ export default function BlogEdit() {
                 <Box sx={{ mt: 2, position: "relative", width: "fit-content" }}>
                   <img
                     src={imagePreview}
-                    alt="Blog preview"
+                    alt="Project preview"
                     style={{
                       maxWidth: "100%",
                       maxHeight: "300px",
@@ -701,7 +719,7 @@ export default function BlogEdit() {
 
         {/* Content Editor */}
         <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-3">Blog Content</h2>
+          <h2 className="text-lg font-semibold mb-3">Project Content</h2>
 
           <div className="bg-gray-50 p-2 rounded-t-lg border border-gray-300 flex flex-wrap">
             <MenuButton
@@ -811,6 +829,7 @@ export default function BlogEdit() {
               <InsertPhotoIcon fontSize="small" />
             </MenuButton>
 
+            {/* <Box sx={{ position: 'relative'}}> */}
             <IconButton
               size="small"
               className="m-1"
@@ -899,6 +918,7 @@ export default function BlogEdit() {
                 Delete Table
               </MenuItem>
             </Menu>
+            {/* </Box> */}
 
             {/* Hard Break and Horizontal Rule */}
             <MenuButton
@@ -914,6 +934,18 @@ export default function BlogEdit() {
               title="Horizontal Rule"
             >
               <BorderHorizontalIcon fontSize="small" />
+            </MenuButton>
+            <Divider
+              orientation="vertical"
+              flexItem
+              style={{ margin: "0 8px" }}
+            />
+            <MenuButton
+              onClick={() => editor.chain().focus().unsetAllMarks().run()}
+              disabled={!editor}
+              title="Clear Formatting"
+            >
+              <FormatClearIcon fontSize="small" />
             </MenuButton>
             <Divider
               orientation="vertical"

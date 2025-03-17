@@ -13,14 +13,18 @@ import { Dashboard } from "./pages/Dashboard.jsx";
 
 import { Amplify } from "aws-amplify";
 import config_json from "./exports";
-import { Projects } from "./pages/Projects.jsx";
-import { ProjectEdit } from "./pages/ProjectEdit.jsx";
-import { Blogs } from "./pages/Blogs.jsx";
-import { Events } from "./pages/Events.jsx";
-import BlogEdit from "./pages/BlogEdit.jsx";
-import EventEdit from "./pages/EventEdit.jsx";
-import { Gallery } from "./pages/Gallery.jsx";
-import { GalleryForm } from "./pages/GalleryForm.jsx";
+import { Projects } from "./pages/projects/Projects.jsx";
+import { ProjectEdit } from "./pages/projects/ProjectEdit.jsx";
+import { Blogs } from "./pages/blogs/Blogs.jsx";
+import { Events } from "./pages/events/Events.jsx";
+import BlogEdit from "./pages/blogs/BlogEdit.jsx";
+import EventEdit from "./pages/events/EventEdit.jsx";
+import { Gallery } from "./pages/gallery/Gallery.jsx";
+import { GalleryForm } from "./pages/gallery/GalleryForm.jsx";
+import { Partners } from "./pages/partners/Partners.jsx";
+import PartnerEdit from "./pages/partners/PartnerEdit.jsx";
+import { News } from "./pages/news/News.jsx";
+import NewsEdit from "./pages/news/NewsEdit.jsx";
 
 Amplify.configure(config_json);
 
@@ -41,6 +45,12 @@ const router = createBrowserRouter(
       <Route path="/gallery" element={<Gallery />} />
       <Route path="/gallery/new" element={<GalleryForm />} />
       <Route path="/gallery/edit/:id" element={<GalleryForm />} />
+      <Route path="/partners" element={<Partners/>}/>
+      <Route path="/partners/new" element={<PartnerEdit/>}/>
+      <Route path="/partners/edit/:partnerId" element={<PartnerEdit/>}/>
+      <Route path="/news" element={<News/>}/>
+      <Route path="/news/new" element={<NewsEdit/>}/>
+      <Route path="/news/edit/:newsId" element={<NewsEdit/>}/>
     </Route>
   )
 );

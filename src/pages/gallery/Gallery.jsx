@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { listSlumsoccerGalleries } from "../graphql/queries";
-import { deleteSlumsoccerGallery } from "../graphql/mutations";
+import { listSlumsoccerGalleries } from "../../graphql/queries";
+import { deleteSlumsoccerGallery } from "../../graphql/mutations";
 import {
   CircularProgress,
   Button,
@@ -36,7 +36,11 @@ export function Gallery() {
   const [selectedGallery, setSelectedGallery] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [notification, setNotification] = useState({ open: false, message: "", severity: "success" });
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const [viewMode, setViewMode] = useState("grid"); // grid or list
 
   // Fetch galleries on component mount
@@ -49,12 +53,11 @@ export function Gallery() {
       setLoading(true);
       const galleriesData = await client.graphql({
         query: listSlumsoccerGalleries,
-        variables: { limit: 100 }
+        variables: { limit: 100 },
       });
-      
+
       const galleryItems = galleriesData.data.listSlumsoccerGalleries.items;
       setGalleries(galleryItems);
-      
     } catch (err) {
       console.error("Error fetching galleries:", err);
       setError("Failed to load galleries. Please try again later.");
@@ -74,24 +77,26 @@ export function Gallery() {
         query: deleteSlumsoccerGallery,
         variables: {
           input: {
-            galleryId: selectedGallery.galleryId
-          }
-        }
+            galleryId: selectedGallery.galleryId,
+          },
+        },
       });
-      
+
       // Remove deleted gallery from state
-      setGalleries(galleries.filter(g => g.galleryId !== selectedGallery.galleryId));
+      setGalleries(
+        galleries.filter((g) => g.galleryId !== selectedGallery.galleryId)
+      );
       setNotification({
         open: true,
         message: "Gallery item deleted successfully!",
-        severity: "success"
+        severity: "success",
       });
     } catch (err) {
       console.error("Error deleting gallery item:", err);
       setNotification({
         open: true,
         message: "Failed to delete gallery item. Please try again.",
-        severity: "error"
+        severity: "error",
       });
     } finally {
       setDeleteDialogOpen(false);
@@ -104,9 +109,10 @@ export function Gallery() {
   };
 
   // Filter galleries based on search term
-  const filteredGalleries = galleries.filter(gallery => 
-    searchTerm === "" || 
-    gallery.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredGalleries = galleries.filter(
+    (gallery) =>
+      searchTerm === "" ||
+      gallery.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -143,36 +149,36 @@ export function Gallery() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
-                style: { paddingLeft: '35px', borderRadius: '8px' }
+                style: { paddingLeft: "35px", borderRadius: "8px" },
               }}
             />
           </div>
-          
+
           {/* View toggle buttons */}
           <div className="flex">
             <Button
               variant={viewMode === "grid" ? "contained" : "outlined"}
               onClick={() => setViewMode("grid")}
-              style={{ textTransform: 'none', borderRadius: '8px 0 0 8px' }}
+              style={{ textTransform: "none", borderRadius: "8px 0 0 8px" }}
             >
               Grid
             </Button>
             <Button
               variant={viewMode === "list" ? "contained" : "outlined"}
               onClick={() => setViewMode("list")}
-              style={{ textTransform: 'none', borderRadius: '0 8px 8px 0' }}
+              style={{ textTransform: "none", borderRadius: "0 8px 8px 0" }}
             >
               List
             </Button>
           </div>
-          
+
           {/* Add new gallery button */}
           <Link to="/gallery/new">
             <Button
               variant="contained"
               color="primary"
               startIcon={<AddIcon />}
-              style={{ textTransform: 'none', borderRadius: '8px' }}
+              style={{ textTransform: "none", borderRadius: "8px" }}
             >
               Add Gallery Item
             </Button>
@@ -184,45 +190,48 @@ export function Gallery() {
       {viewMode === "grid" && (
         <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
           {filteredGalleries.length > 0 ? (
-            <ImageList variant="masonry" cols={3} gap={16}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredGalleries.map((gallery) => (
-                <ImageListItem key={gallery.galleryId} className="relative group">
-                  <img
-                    src={gallery.imgUrl || "https://via.placeholder.com/300x200?text=No+Image"}
-                    alt={gallery.title}
-                    loading="lazy"
-                    style={{ borderRadius: '8px' }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "https://via.placeholder.com/300x200?text=Error+Loading+Image";
-                    }}
-                  />
-                  <ImageListItemBar
-                    title={gallery.title}
-                    actionIcon={
+                <div className="group relative bg-white rounded-xl  shadow-lg overflow-hidden transform transition duration-300 hover:-translate-y-2 hover:shadow-2xl">
+                  <div className="relative h-64 overflow-hidden">
+                    <div className="absolute top-4 right-4 z-10"></div>
+                    <img
+                      src={gallery.imgUrl}
+                      className="w-full h-full object-cover transform transition duration-500 group-hover:scale-110"
+                      alt={gallery.title}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                      <div className="p-4 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"></div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-1xl font-bold text-orange-600 -mt-0">
+                        {gallery.title}
+                      </h3>
                       <div className="hidden group-hover:flex space-x-1 mr-2">
                         <Tooltip title="Edit">
                           <Link to={`/gallery/edit/${gallery.galleryId}`}>
-                            <IconButton size="small" sx={{ color: 'white' }}>
+                            <IconButton size="small" color="primary">
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Link>
                         </Tooltip>
                         <Tooltip title="Delete">
-                          <IconButton 
-                            size="small" 
-                            sx={{ color: 'white' }}
+                          <IconButton
+                            size="small"
+                            color="error"
                             onClick={() => handleDeleteClick(gallery)}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </div>
-                    }
-                  />
-                </ImageListItem>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </ImageList>
+            </div>
           ) : (
             <div className="text-center py-16">
               <p className="text-gray-500">No gallery items found</p>
@@ -232,11 +241,11 @@ export function Gallery() {
                 </p>
               ) : (
                 <Link to="/gallery/new">
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
+                  <Button
+                    variant="outlined"
+                    color="primary"
                     startIcon={<AddIcon />}
-                    style={{ marginTop: '16px', textTransform: 'none' }}
+                    style={{ marginTop: "16px", textTransform: "none" }}
                   >
                     Add your first gallery item
                   </Button>
@@ -255,9 +264,15 @@ export function Gallery() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Image
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -265,19 +280,22 @@ export function Gallery() {
                     <tr key={gallery.galleryId} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="h-12 w-16 rounded overflow-hidden bg-gray-100">
-                          <img 
-                            src={gallery.imgUrl} 
-                            alt={gallery.title} 
+                          <img
+                            src={gallery.imgUrl}
+                            alt={gallery.title}
                             className="h-full w-full object-cover"
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = "https://via.placeholder.com/64x48?text=No+Image";
+                              e.target.src =
+                                "https://via.placeholder.com/64x48?text=No+Image";
                             }}
                           />
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{gallery.title || "Untitled"}</div>
+                        <div className="font-medium text-gray-900">
+                          {gallery.title || "Untitled"}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
@@ -289,9 +307,9 @@ export function Gallery() {
                             </Link>
                           </Tooltip>
                           <Tooltip title="Delete">
-                            <IconButton 
-                              size="small" 
-                              color="error" 
+                            <IconButton
+                              size="small"
+                              color="error"
                               onClick={() => handleDeleteClick(gallery)}
                             >
                               <DeleteIcon fontSize="small" />
@@ -313,11 +331,11 @@ export function Gallery() {
                 </p>
               ) : (
                 <Link to="/gallery/new">
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
+                  <Button
+                    variant="outlined"
+                    color="primary"
                     startIcon={<AddIcon />}
-                    style={{ marginTop: '16px', textTransform: 'none' }}
+                    style={{ marginTop: "16px", textTransform: "none" }}
                   >
                     Add your first gallery item
                   </Button>
@@ -336,14 +354,20 @@ export function Gallery() {
         <DialogTitle>Delete Gallery Item</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete "{selectedGallery?.title || 'this gallery item'}"? This action cannot be undone.
+            Are you sure you want to delete "
+            {selectedGallery?.title || "this gallery item"}"? This action cannot
+            be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+          >
             Delete
           </Button>
         </DialogActions>
@@ -354,9 +378,12 @@ export function Gallery() {
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity}>
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+        >
           {notification.message}
         </Alert>
       </Snackbar>
